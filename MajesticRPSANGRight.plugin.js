@@ -1,7 +1,7 @@
 /**
  * @name MajesticRPSANGRight
  * @author Oleha discrod: mroleha
- * @version 1.0.1
+ * @version 1.0.0
  * @description Majestic RP Washington SANG Right Click version.
  * @source https://github.com/Oleha1/BDPlugin
  * @updateUrl https://raw.githubusercontent.com/Oleha1/BDPlugin/main/MajesticRPSANGRight.plugin.js
@@ -12,6 +12,10 @@ const TARGET_GUILD_ID = "1214393279936991252";
 const TARGET_CHANNEL_ID_KA = "1214393282201919542"
 
 const TARGET_CHANNEL_ID_MI = "1214393282201919543";
+
+const PLUGIN_VERSION = "1.0.0";
+const UPDATE_URL = "https://raw.githubusercontent.com/Oleha1/BDPlugin/main/MajesticRPSANGRight.plugin.js";
+const PLUGIN_FILE_NAME = "MajesticRPSANGRight.plugin.js";
 
 module.exports = (() => {
 	if (!window.BDFDB_Global || (!window.BDFDB_Global.loaded && !window.BDFDB_Global.started)) {
@@ -36,6 +40,40 @@ module.exports = (() => {
 			start() { }
 			stop() { }
 		};
+	}
+
+	async function checkForUpdate() {
+		try {
+			const res = await fetch(UPDATE_URL);
+			const text = await res.text();
+
+			const match = text.match(/@version\s+([0-9.]+)/);
+			if (!match) return;
+
+			const remoteVersion = match[1];
+
+			if (remoteVersion !== PLUGIN_VERSION) {
+				BdApi.UI.showConfirmationModal(
+					"Доступно обновление",
+					`Текущая версия: ${PLUGIN_VERSION}\nНовая версия: ${remoteVersion}`,
+					{
+						confirmText: "Обновить",
+						cancelText: "Отмена",
+						onConfirm: () => {
+							const fs = require("fs");
+							const path = require("path");
+
+							const pluginPath = path.join(BdApi.Plugins.folder, PLUGIN_FILE_NAME);
+							fs.writeFileSync(pluginPath, text);
+
+							BdApi.UI.showToast("Плагин обновлён. Перезапусти Discord.", { type: "success" });
+						}
+					}
+				);
+			}
+		} catch (err) {
+			console.error("Ошибка проверки обновления:", err);
+		}
 	}
 
 	return (([Plugin, BDFDB]) => {
@@ -540,6 +578,8 @@ module.exports = (() => {
 			}
 
 			onStart() {
+				checkForUpdate();
+
 				BdApi.ContextMenu.patch("message", (menu, props) => {
 					const { message , channel } = props;
 
@@ -568,5 +608,4 @@ module.exports = (() => {
 			}
 		};
 	})(window.BDFDB_Global.PluginUtils.buildPlugin({}));
-
 })();
