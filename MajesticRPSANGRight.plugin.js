@@ -1,7 +1,7 @@
 /**
  * @name MajesticRPSANGRight
  * @author Oleha discrod: mroleha
- * @version 1.0.2
+ * @version 1.0.3
  * @description Majestic RP Washington SANG Right Click version.
  * @source https://github.com/Oleha1/BDPlugin
  * @updateUrl https://raw.githubusercontent.com/Oleha1/BDPlugin/main/MajesticRPSANGRight.plugin.js
@@ -13,7 +13,7 @@ const TARGET_CHANNEL_ID_KA = "1214393282201919542"
 
 const TARGET_CHANNEL_ID_MI = "1214393282201919543";
 
-const PLUGIN_VERSION = "1.0.2";
+const PLUGIN_VERSION = "1.0.3";
 const UPDATE_URL = "https://raw.githubusercontent.com/Oleha1/BDPlugin/main/MajesticRPSANGRight.plugin.js";
 const PLUGIN_FILE_NAME = "MajesticRPSANGRight.plugin.js";
 
@@ -609,5 +609,6 @@ module.exports = (() => {
 		};
 	})(window.BDFDB_Global.PluginUtils.buildPlugin({}));
 })();
+
 
 
