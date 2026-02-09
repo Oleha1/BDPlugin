@@ -1,2 +1,2 @@
 # BDPlugin
-плагин для Better Discord
+плагины для Discord
