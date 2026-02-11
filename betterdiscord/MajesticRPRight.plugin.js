@@ -1,9 +1,9 @@
 /**
  * @name MajesticRPSANGRight
  * @author Oleha
- * @version 1.0.9
+ * @version 1.1.0
  * @description Majestic RP Right Click version.
- * @source https://github.com/Oleha1/BDPlugin
+ * @source https://github.com/Oleha1/DSPlugins
  */
 
 const TARGET_GUILD_ID = "1214393279936991252";
@@ -11,9 +11,24 @@ const TARGET_CHANNEL_ID_KA = "1214393282201919542"
 
 const TARGET_CHANNEL_ID_MI = "1214393282201919543";
 
-const PLUGIN_VERSION = "1.0.9";
+const fs = require("fs");
+const path = require("path");
+
+const PLUGIN_VERSION = "1.1.0";
 const UPDATE_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/betterdiscord/MajesticRPRight.plugin.js";
+const ASSETS_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/assets/svg/";
 const PLUGIN_FILE_NAME = "MajesticRPRight.plugin.js";
+
+const ASSETS = [
+  "Promotion.svg",
+  "Translation.svg",
+  "Acceptance.svg",
+  "Dismissal.svg",
+  "MilitaryID.svg",
+  "Info.svg",
+  "GitHub.svg",
+  "Discord.svg"
+];
 
 module.exports = (() => {
 	if (!window.BDFDB_Global || (!window.BDFDB_Global.loaded && !window.BDFDB_Global.started)) {
@@ -68,6 +83,39 @@ module.exports = (() => {
 			}
 		} catch (err) {
 			console.error("Ошибка проверки обновления:", err);
+		}
+	}
+
+	async function checkAndUpdateAssets() {
+		const assetsDir = path.join(BdApi.Plugins.folder, "assets", "svg");
+
+		if (!fs.existsSync(assetsDir)) {
+			fs.mkdirSync(assetsDir, { recursive: true });
+		}
+
+		for (const file of ASSETS) {
+			const localPath = path.join(assetsDir, file);
+
+			try {
+				const res = await fetch(ASSETS_URL + file);
+				if (!res.ok) continue;
+
+				const remoteBuffer = Buffer.from(await res.arrayBuffer());
+
+				if (!fs.existsSync(localPath)) {
+					fs.writeFileSync(localPath, remoteBuffer);
+					continue;
+				}
+
+				const localBuffer = fs.readFileSync(localPath);
+				
+				if (!localBuffer.equals(remoteBuffer)) {
+					fs.writeFileSync(localPath, remoteBuffer);
+				}
+
+			} catch (err) {
+				console.error(`[MajesticRP] Failed asset check: ${file}`, err);
+			}
 		}
 	}
 
@@ -186,6 +234,7 @@ module.exports = (() => {
 				type: "item",
 				id: "buttonMilitaryID",
 				name: "Военный билет",
+				svg: "",
 				action: function (message , channel) {
 					let selfId = BdApi.Webpack.getModule(m => m.getCurrentUser).getCurrentUser().id;
 
@@ -412,26 +461,15 @@ module.exports = (() => {
 			}));
 		}
 
-		function GitHubIcon(size = 24, color = "white") {
-			return BdApi.React.createElement("svg", {
-				width: size,
-				height: size,
-				viewBox: "0 0 24 24",
-				fill: color
-			}, BdApi.React.createElement("path", {
-				d: "M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2.2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.6 2.3 2.8 2.3.4-.7.8-1.1 1.2-1.3-2.6-.3-5.4-1.3-5.4-5.9 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.6.1-3.3 0 0 1-.3 3.3 1.2 1-.3 2.1-.4 3.2-.4s2.2.1 3.2.4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 3 .1 3.3.8.8 1.2 1.8 1.2 3.1 0 4.6-2.8 5.6-5.4 5.9.4.3.8 1 .8 2v3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"
-			}));
-		}
-
-		function DiscordIcon(size = 24, color = "white") {
-			return BdApi.React.createElement("svg", {
-				width: size,
-				height: size,
-				viewBox: "0 0 16 16",
-				fill: color
-			}, BdApi.React.createElement("path", {
-				d: "M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"
-			}));
+		function getSVG(name) {
+			const imgPath = path.join(BdApi.Plugins.folder, "assets", "svg", `${name}.svg`);
+			const svgText = fs.readFileSync(imgPath, "utf8");
+			return BdApi.React.createElement("span", {
+				style: {
+					display: "flex",
+				},
+				dangerouslySetInnerHTML: { __html: svgText }
+			});
 		}
 
 
@@ -458,14 +496,15 @@ class Info extends BdApi.React.Component {
 				BdApi.React.createElement("span", {}, 
 					"Если у вас есть идеи для улучшения/изменения плагина — пишите в Discord."
 				),
+
 				BdApi.React.createElement("div",{
 					style: {
 						display: "flex",
 						gap: "10px",
 					}
 				},[
-					renderButton(() => window.open("https://github.com/Oleha1/DSPlugins", "_blank"),"","rgb(15, 15, 15)",GitHubIcon()),
-					renderButton(() => window.open("https://discord.com/users/1063164463571796100", "_blank"),"", "rgb(114,137,218)",DiscordIcon())
+					renderButton(() => window.open("https://github.com/Oleha1/DSPlugins", "_blank"),"","rgb(15, 15, 15)", getSVG("GitHub")),
+					renderButton(() => window.open("https://discord.com/users/1063164463571796100", "_blank"),"", "rgb(114,137,218)",getSVG("Discord"))
 				])
 			])
 		]);
@@ -659,6 +698,7 @@ class Info extends BdApi.React.Component {
 
 			onStart() {
 				checkForUpdate();
+				checkAndUpdateAssets();
 
 				BdApi.ContextMenu.patch("message", (menu, props) => {
 					const { message , channel } = props;
@@ -673,7 +713,17 @@ class Info extends BdApi.React.Component {
 							button = BdApi.ContextMenu.buildItem({ 
 								type: "item", 
 								id: buttonArray.id, 
-								label: buttonArray.name,
+								label: BdApi.React.createElement("div",{
+									style: {
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center"
+									}
+								},[
+									BdApi.React.createElement("span", {}, buttonArray.name),
+									getSVG(buttonArray.id.replace("button",""))
+								]
+								),
 								action: () => { buttonArray.action(message , channel) }
 							});
 						}
@@ -689,6 +739,3 @@ class Info extends BdApi.React.Component {
 		};
 	})(window.BDFDB_Global.PluginUtils.buildPlugin({}));
 })();
-
-
-
