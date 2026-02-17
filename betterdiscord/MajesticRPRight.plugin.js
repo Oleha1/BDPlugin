@@ -1,7 +1,7 @@
 /**
  * @name MajesticRPSANGRight
  * @author Oleha
- * @version 1.1.1
+ * @version 1.1.2
  * @description Majestic RP Right Click version.
  * @source https://github.com/Oleha1/DSPlugins
  */
@@ -14,7 +14,7 @@ const TARGET_CHANNEL_ID_MI = "1214393282201919543";
 const fs = require("fs");
 const path = require("path");
 
-const PLUGIN_VERSION = "1.1.1";
+const PLUGIN_VERSION = "1.1.2";
 const UPDATE_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/betterdiscord/MajesticRPRight.plugin.js";
 const ASSETS_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/assets/svg/";
 const PLUGIN_FILE_NAME = "MajesticRPRight.plugin.js";
@@ -61,14 +61,14 @@ module.exports = (() => {
 
 	async function checkForUpdate() {
 		try {
-			const res = await fetch(UPDATE_URL);
+			const res = await fetchNoCache(UPDATE_URL);
 			const text = await res.text();
 
 			const match = text.match(/@version\s+([0-9.]+)/);
 			if (!match) return;
 
 			const remoteVersion = match[1];
-			
+
 			if (remoteVersion !== PLUGIN_VERSION) {
 				setTimeout(() => {
 					const fs = require("fs");
@@ -101,26 +101,42 @@ module.exports = (() => {
 			const localPath = path.join(assetsDir, file);
 
 			try {
-				const res = await fetch(ASSETS_URL + file);
+				const res = await fetchNoCache(`${ASSETS_URL}${file}`);
 				if (!res.ok) continue;
 
-				const remoteBuffer = Buffer.from(await res.arrayBuffer());
+				const remoteArray = new Uint8Array(await res.arrayBuffer());
 
 				if (!fs.existsSync(localPath)) {
-					fs.writeFileSync(localPath, remoteBuffer);
+					fs.writeFileSync(localPath, remoteArray);
+					console.log("Downloaded", file);
 					continue;
 				}
 
-				const localBuffer = fs.readFileSync(localPath);
-				
-				if (!localBuffer.equals(remoteBuffer)) {
-					fs.writeFileSync(localPath, remoteBuffer);
+				const localArray = new Uint8Array(fs.readFileSync(localPath));
+
+				if (!buffersEqual(localArray, remoteArray)) {
+					fs.writeFileSync(localPath, remoteArray);
+					console.log("Updated", file);
+				} else {
+					console.log("No changes", file);
 				}
 
 			} catch (err) {
 				console.error(`[MajesticRP] Failed asset check: ${file}`, err);
 			}
 		}
+	}
+
+	async function fetchNoCache(url) {
+		return fetch(`${url}?t=${Date.now()}`);
+	}
+
+	function buffersEqual(a, b) {
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
 	}
 
 	return (([Plugin, BDFDB]) => {
