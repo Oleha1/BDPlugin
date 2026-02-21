@@ -1,7 +1,7 @@
 /**
  * @name MajesticRPSANGRight
  * @author Oleha
- * @version 1.1.3
+ * @version 1.1.4
  * @description Majestic RP Right Click version.
  * @source https://github.com/Oleha1/DSPlugins
  */
@@ -15,7 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const PLUGIN_VERSION = "1.1.3";
+const PLUGIN_VERSION = "1.1.4";
 const UPDATE_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/betterdiscord/MajesticRPRight.plugin.js";
 const ASSETS_URL = "https://raw.githubusercontent.com/Oleha1/DSPlugins/main/assets/svg/";
 const PLUGIN_FILE_NAME = "MajesticRPRight.plugin.js";
@@ -32,7 +32,8 @@ const ASSETS = [
   "GitHub.svg",
   "Discord.svg",
   "AddReport.svg",
-  "SendReport.svg"
+  "SendReport.svg",
+  "Recovery.svg"
 ];
 
 module.exports = (() => {
@@ -181,7 +182,7 @@ module.exports = (() => {
 			}
 		]
 
-		const buttons = [
+		const buttonsMessage = [
 			{
 				type: "separator",
 			},
@@ -229,6 +230,19 @@ module.exports = (() => {
 						`1. <@${selfId}> ${getUserNick(selfId)} ${getUserStatick(selfId)}\n2. <@${message.author.id}> ${getUserNick(message.author.id)} ${getUserStatick(message.author.id)}\n3. Принятие\n4. Ранг - 1\n5. Собеседование`,
 						"Принятие отписано!"
 					)
+				}
+			},
+			{
+				type: "item",
+				id: "buttonRecovery",
+				name: "Восстановление",
+				action: function (message , channel) {
+					let userId = getUserIDOnMessage(message)
+					BDFDB.ModalUtils.open(this, {
+						header: "Подробности восстановления",
+						size: "LARGE",
+						children: BdApi.React.createElement(RecoveryModal, {msg: message, channel, selectedUserId: userId })
+					});
 				}
 			},
 			{
@@ -281,7 +295,7 @@ module.exports = (() => {
 					BDFDB.ModalUtils.open(this, {
 						header: "Подробности отчёта",
 						size: "LARGE",
-						children: BdApi.React.createElement(Report, {msg: message, channel })
+						children: BdApi.React.createElement(ReportModal, {msg: message, channel })
 					});
 				}
 			},
@@ -296,7 +310,7 @@ module.exports = (() => {
 					BDFDB.ModalUtils.open(this, {
 						header: "Информация",
 						size: "LARGE",
-						children: BdApi.React.createElement(Info)
+						children: BdApi.React.createElement(InfoModal)
 					});
 				}
 			}
@@ -308,6 +322,7 @@ module.exports = (() => {
 					if (embed.fields) {
 						for (const field of embed.fields) {
 							if (field.rawName == "Discord пользователя") return field.rawValue.slice(2, field.rawValue.length - 1);
+							if (field.rawName == "discord id") return field.rawValue.slice(2, field.rawValue.length - 1);
 						}
 					}
 				}
@@ -511,8 +526,59 @@ module.exports = (() => {
 				dangerouslySetInnerHTML: { __html: svgText }
 			});
 		}
+		
+		class RecoveryModal extends BdApi.React.Component {
+			constructor(props) {
+				super(props);
+				this.state = { rank: ""};
+			}
 
-		class Report extends BdApi.React.Component {
+			render() {
+				const { msg, channel, selectedUserId} = this.props;
+				const { rank } = this.state;
+				
+				const result = BdApi.React.createElement("div", {
+					style: {
+						padding: 10
+					}
+				}, [
+					renderMessage(msg,channel),
+
+					BdApi.React.createElement("div", {
+						style: { 
+							marginTop: 20, 
+							display: "flex", 
+							gap: 10 
+						}
+					}, [
+						renderInput("Ранг после восстановления",e => { this.setState({ rank: e.target.value }) })
+					]),
+					renderButton(() => {
+							if (!rank.trim()) {
+								BdApi.UI.showToast("Заполните полe: ранг после восстановления", { type: "warning" });
+								return;
+							}
+
+							let selfId = BdApi.Webpack.getModule(m => m.getCurrentUser).getCurrentUser().id;
+							
+							if (!getUserNick(selfId) || !getUserNick(selectedUserId)) return;
+							if (!getUserStatick(selfId) || ! getUserStatick(selectedUserId)) return
+
+							sendMessage(
+								TARGET_CHANNEL_ID_KA,
+								`1. <@${selfId}> ${getUserNick(selfId)} ${getUserStatick(selfId)}\n2. <@${selectedUserId}> ${getUserNick(selectedUserId)} ${getUserStatick(selectedUserId)}\n3. Восстановление\n4. c 1 на ${rank}\n5. ${createLink(channel,msg)}`,
+								"Восстановления отписано!"
+							)
+							closeMenu();
+						}
+					)
+				]
+				);
+				return result;
+			}
+		}
+
+		class ReportModal extends BdApi.React.Component {
 			constructor(props) {
 				super(props);
 				this.state = { reportText: "" };
@@ -561,7 +627,7 @@ module.exports = (() => {
 			}
 		}
 
-		class Info extends BdApi.React.Component {
+		class InfoModal extends BdApi.React.Component {
 			constructor(props) {
 				super(props);
 			}
@@ -790,9 +856,9 @@ module.exports = (() => {
 
 				BdApi.ContextMenu.patch("message", (menu, props) => {
 					const { message , channel } = props;
-
 					let propsChildren = menu.props.children.props.children
-					buttons.forEach(buttonArray => {
+
+					buttonsMessage.forEach(buttonArray => {
 						let button
 						if (buttonArray.type === "separator") {
 							button = BdApi.ContextMenu.buildItem( {type: "separator"});
